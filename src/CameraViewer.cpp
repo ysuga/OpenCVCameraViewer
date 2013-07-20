@@ -8,6 +8,7 @@
  */
 
 #include "CameraViewer.h"
+#include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
 // Module specification
@@ -71,7 +72,20 @@ RTC::ReturnCode_t CameraViewer::onInitialize()
 
   // <rtc-template block="bind_config">
   // </rtc-template>
+
+  cvNamedWindow("CapturedImage", CV_WINDOW_AUTOSIZE);  
+  cvStartWindowThread();
+  //  m_pImg = cvCreateImage(cvSize(320, 240), IPL_DEPTH_8U, 3);
+
+  //  for (int i = 0;i < 240;i++) {
+  //n    for(int j = 0;j < 320;j++) {
+  //n      m_pImg->imageData[(i*240+j)*3+1] = 255;
+  //n    }
+  //  }
   
+  ///  cvShowImage("CapturedImage", m_pImg);
+  //  cv::imwrite("hoge.jpg", cv::Mat(m_pImg));
+
   return RTC::RTC_OK;
 }
 
@@ -99,7 +113,7 @@ RTC::ReturnCode_t CameraViewer::onShutdown(RTC::UniqueId ec_id)
 
 RTC::ReturnCode_t CameraViewer::onActivated(RTC::UniqueId ec_id)
 {
-  cvNamedWindow("CapturedImage", CV_WINDOW_AUTOSIZE);
+
   return RTC::RTC_OK;
 }
 
@@ -114,19 +128,33 @@ RTC::ReturnCode_t CameraViewer::onDeactivated(RTC::UniqueId ec_id)
 
 
 RTC::ReturnCode_t CameraViewer::onExecute(RTC::UniqueId ec_id) {
+  //std::cout << "onExecute" << std::endl;
   if (m_inIn.isNew()) {
+
     m_inIn.read();
     if ((m_pImg == NULL) || 
 	(m_in.width != m_pImg->width || m_in.height != m_pImg->height)) {
+
       if(m_pImg != NULL) {
 	cvReleaseImage(&m_pImg);
       }
       m_pImg = cvCreateImage(cvSize(m_in.width, m_in.height), IPL_DEPTH_8U, 3);
-      
+      std::cout << "Update" << std::endl;
     }
+    std::cout << "Received(" << m_in.width << "x" << m_in.height << ")" << std::endl;
+    //    cvStartWindowThread();
+    // m_pImg->width = m_in.width;
+    //m_pImg->height = m_in.height;
     memcpy(m_pImg->imageData, (void*)&(m_in.pixels[0]), m_in.pixels.length());
-    cvShowImage("CapturedImage", m_pImg);
-    cvWaitKey(0);
+    
+    cv::imwrite("save.jpg", cv::Mat(m_pImg));
+    //for (int i = 0;i < 240;i++) {
+    //      for(int j = 0;j < 320;j++) {
+    //	m_pImg->imageData[(i*240+i)*3] = 255;
+    //      }
+    //    }
+    //    cvShowImage("CapturedImage", m_pImg);
+    //    cvWaitKey(1);
   }
   return RTC::RTC_OK;
 }
